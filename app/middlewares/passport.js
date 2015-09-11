@@ -15,43 +15,12 @@ function useExternalPassportStrategy(OauthStrategy, config, field) {
   passport.use(new OauthStrategy(config, nodeifyit(authCB, {spread: true})))
 
   async function authCB(req, token, _ignored_, account) {
-    if (!req.user) {
-        let column = field + '.id';
-        let user = await User.promise.findOne({ column : account.id })
-        if (user){
-            return user;
-        }else{
-            let newUser = new User();
-            if (field === 'facebook'){
-              newUser.facebook.id    = account.id;                  
-              newUser.facebook.token = token;                  
-              newUser.facebook.name  = account.displayName
-            }else{
-              newUser.twitter.id    = account.id;                  
-              newUser.twitter.token = token;                  
-              newUser.twitter.name  = account.displayName 
-            }
-
-          //  newUser.facebook.email = account.emails[0].value;
-
-            return await newUser.save();
-        }
-    } else {
-        let user            = req.user; // pull the user out of the session
-        // update the current users facebook credentials
-        if (field === 'facebook'){
-          user.facebook.id    = account.id;
-          user.facebook.token = token;
-          user.facebook.name  = account.displayName;
-        //  user.facebook.email = account.emails[0].value;
-        }else{
-          user.twitter.id    = account.id;                  
-          user.twitter.token = token;                  
-          user.twitter.name  = account.displayName 
-        }
-
-        await user.save();
+    console.log('reqqqqqqqq', req.user);
+    let user = req.user;
+    if (!user){
+      user = new User();
     }
+    return await user.linkAccount(account.provider, {account: account, token: token})
   }
 }
 
@@ -84,7 +53,6 @@ passport.use('local-signup', new LocalStrategy({
     if (await User.promise.findOne({email})) {
         return [false, {message: 'That email is already taken.'}];
     }
-console.log('object', email, password)
     // create the user
     let user = new User();
     user.local.email = email;

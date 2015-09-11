@@ -5,8 +5,6 @@ let then = require('express-then');
 let scope = 'email'
 let Twitter = require('twitter');
 
-let posts = require('../data/posts')
-
 let networks = {
     twitter: {
         network: {
@@ -95,7 +93,7 @@ module.exports = (app) => {
             access_token_secret: twitterConfig.accessSecret
         })
         let [tweets] = await twitterClient.promise.get('/statuses/home_timeline');
-        let t = tweets.map(tweet =>{
+        let posts = tweets.map(tweet =>{
             return {
                 id : tweet.id,
                 image: tweet.user.profile_image_url,
@@ -108,7 +106,7 @@ module.exports = (app) => {
         })
         console.log('tweettttttttt',t)
         res.render('timeline.ejs', {
-            posts: t,
+            posts: posts,
             message: req.flash('error') 
         })
     }catch(e){
