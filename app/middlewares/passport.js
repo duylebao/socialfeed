@@ -15,7 +15,6 @@ function useExternalPassportStrategy(OauthStrategy, config, field) {
   passport.use(new OauthStrategy(config, nodeifyit(authCB, {spread: true})))
 
   async function authCB(req, token, _ignored_, account) {
-    console.log('reqqqqqqqq', req.user);
     let user = req.user;
     if (!user){
       user = new User();
@@ -64,12 +63,10 @@ passport.use('local-signup', new LocalStrategy({
 
 function configure(config) {
     passport.serializeUser(nodeifyit(async (user) => {
-    //  console.log('serrrrrrrrrrrrrr', user);
        return user._id
     }));
 
     passport.deserializeUser(nodeifyit(async (id) => {
-     // console.log('dddddeeserrriiiialll', id);
         return await User.promise.findById(id);
     }));
 
@@ -84,15 +81,6 @@ function configure(config) {
         consumerSecret: config.twitter.consumerSecret,
         callbackURL: config.twitter.callbackUrl
     }, 'twitter')
-
-
-
-  // useExternalPassportStrategy(LinkedInStrategy, {...}, 'linkedin')
-  // useExternalPassportStrategy(LinkedInStrategy, {...}, 'facebook')
-  // useExternalPassportStrategy(LinkedInStrategy, {...}, 'google')
-  // useExternalPassportStrategy(LinkedInStrategy, {...}, 'twitter')
-  // passport.use('local-login', new LocalStrategy({...}, (req, email, password, callback) => {...}))
-  // passport.use('local-signup', new LocalStrategy({...}, (req, email, password, callback) => {...}))
 
   return passport
 }

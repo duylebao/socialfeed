@@ -85,7 +85,6 @@ module.exports = (app) => {
     })) 
 
     app.get('/timeline', isLoggedIn, then(async(req, res) => {
-       try{ 
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
@@ -95,7 +94,7 @@ module.exports = (app) => {
         let [tweets] = await twitterClient.promise.get('/statuses/home_timeline');
         let posts = tweets.map(tweet =>{
             return {
-                id : tweet.id,
+                id : tweet.id_str,
                 image: tweet.user.profile_image_url,
                 text: tweet.text,
                 name: tweet.user.name,
@@ -104,13 +103,58 @@ module.exports = (app) => {
                 network: networks.twitter
             }
         })
-        console.log('tweettttttttt',t)
         res.render('timeline.ejs', {
             posts: posts,
             message: req.flash('error') 
         })
-    }catch(e){
-        console.log(e, e.message)
-    }
     }))
+
+    app.get('/compose', isLoggedIn, (req, res) => {
+        res.render('compose.ejs', {
+            message: req.flash('error')
+        })
+    })
+
+    app.post('/compose', isLoggedIn, then(async(req, res) => {
+        let text = req.body.reply;
+        if (text.length > 140){
+            req.flash('error', 'length cannot be greater than 140 characters')
+        }
+        if (!text.length){
+            req.flash('error', 'Status cannot be empty')
+        }
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })
+        await twitterClient.promise.post('/statuses/update', {status : text});
+        res.redirect('/timeline')
+    })) 
+
+    app.post('/like/:id', isLoggedIn, then(async(req, res) =>{
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })
+        let id = req.params.id;
+        await twitterClient.promise.post('favorites/create', {id})
+        res.end()
+    }))
+
+    app.post('/unlike/:id', isLoggedIn, then(async(req, res) =>{
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })
+        let id = req.params.id;
+        await twitterClient.promise.post('favorites/destroy', {id})
+        res.end()
+    }))
+
 }
