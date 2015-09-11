@@ -157,4 +157,102 @@ module.exports = (app) => {
         res.end()
     }))
 
+    app.get('/reply/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id;
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })        
+        let [tweet] = await twitterClient.promise.get('/statuses/show/'+id);
+        let post = {
+                id : tweet.id_str,
+                image: tweet.user.profile_image_url,
+                text: tweet.text,
+                name: tweet.user.name,
+                username: '@'+tweet.user.screen_name,
+                liked: tweet.favorited,
+                network: networks.twitter
+        }
+        res.render('reply.ejs', {
+            message: req.flash('error'),
+            post: post
+        })
+    }))
+
+    app.post('/reply/:id', isLoggedIn, then(async(req, res) => {
+        let text = req.body.reply;
+        let id = req.params.id;
+        if (text.length > 140){
+            req.flash('error', 'length cannot be greater than 140 characters')
+        }
+        if (!text.length){
+            req.flash('error', 'Status cannot be empty')
+        }
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })
+        console.log('id', id, text)
+        await twitterClient.promise.post('/statuses/update', {
+            status : text,
+            in_reply_to_status_id: id
+        });
+        res.redirect('/timeline')
+    }))     
+
+    app.get('/share/:id', isLoggedIn, then(async(req, res) => {
+        let id = req.params.id;
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })        
+        let [tweet] = await twitterClient.promise.get('/statuses/show/'+id);
+        let post = {
+                id : tweet.id_str,
+                image: tweet.user.profile_image_url,
+                text: tweet.text,
+                name: tweet.user.name,
+                username: '@'+tweet.user.screen_name,
+                liked: tweet.favorited,
+                network: networks.twitter
+        }
+        res.render('share.ejs', {
+            message: req.flash('error'),
+            post: post
+        })
+    }))
+
+    app.post('/share/:id', isLoggedIn, then(async(req, res) => {
+        try{
+        let text = req.body.share;
+        console.log('texttttttt',text)
+        let id = req.params.id;
+        if (text.length > 140){
+            req.flash('error', 'length cannot be greater than 140 characters')
+        }
+        if (!text.length){
+            req.flash('error', 'Status cannot be empty')
+        }
+        let twitterClient = new Twitter({
+            consumer_key: twitterConfig.consumerKey,
+            consumer_secret: twitterConfig.consumerSecret,
+            access_token_key: twitterConfig.accessToken,
+            access_token_secret: twitterConfig.accessSecret
+        })
+        console.log('id', id, text)
+        await twitterClient.promise.post('/statuses/retweet', {
+        //    status : text,
+            id: id
+        });
+        res.redirect('/timeline')
+    }catch(e){
+        console.log('errrrr',e,e.message)
+    }
+    }))      
 }
