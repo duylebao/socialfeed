@@ -176,18 +176,16 @@ module.exports = (app) => {
         let token = req.user.facebook.token;
         let userid = req.user.facebook.id;
         let url = 'https://graph.facebook.com/'+userid+'/feed?access_token='+token;
-        request.post(
-            url,
-            { form: { message: text } },
-            function (error, response, body) {
-            if (error){
-                console.log('error',error)
-            }
-                if (!error && response.statusCode == 200) {
-                    console.log('body', body)
-                }
-            }
-        );
+        try{
+            await request.promise.post(url, {
+                form: {
+                    message: text
+                } 
+            });
+            res.end()
+        }catch(e){
+            console.log('error composing', e)
+        }  
 
         res.redirect('/timeline')
     })) 
@@ -220,36 +218,28 @@ module.exports = (app) => {
         let id = req.params.id;
         let token = req.user.facebook.token;
         let url = 'https://graph.facebook.com/'+id+'/likes?access_token='+token;
-        request.post(
-            url,
-            { form: {} },
-            function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    console.log('success posting like')
-                }else{
-                    console.log('error like',error, reponse.statusCode)
-                }
-                res.end()
-            }
-        );
+        try{
+            await request.promise.post(url, {
+                form: {} 
+            });
+            res.end()
+        }catch(e){
+            console.log('error posting like', e)
+        }
     }))  
 
     app.post('/unlike/facebook/:id', isLoggedIn, then(async(req, res) =>{
         let id = req.params.id;
         let token = req.user.facebook.token;
         let url = 'https://graph.facebook.com/'+id+'/likes?access_token='+token;
-        request({
-            uri: url,
-            method: "DELETE",
-            form: {}
-        }, function(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                console.log('success posting unlike')
-            }else{
-                console.log('error unlike',error, reponse.statusCode)
-            }
+        try{
+            await request.promise.del(url, {
+                form: {} 
+            });
             res.end()
-        });       
+        }catch(e){
+            console.log('error posting unlike', e)
+        }             
     }))       
 
     app.get('/reply/twitter/:id', isLoggedIn, then(async(req, res) => {
@@ -334,18 +324,28 @@ module.exports = (app) => {
         let token = req.user.facebook.token;
         let userid = req.user.facebook.id;
         let url = 'https://graph.facebook.com/'+id+'/comments?access_token='+token;
-        request.post(
-            url,
-            { form: { message: text } },
-            function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    res.redirect('/timeline')
-                }else{
-                    console.log('error',error, reponse.statusCode)
-                    req.flash('error', 'Cannot post a reply')
-                }
-            }
-        );
+        try{
+            await request.promise.post(url, {
+                form: { 
+                    message: text 
+                } 
+            });
+            res.redirect('/timeline')
+        }catch(e){
+            req.flash('error', 'Cannot post a reply')
+        }
+        // request.post(
+        //     url,
+        //     { form: { message: text } },
+        //     function (error, response, body) {
+        //         if (!error && response.statusCode == 200) {
+        //             res.redirect('/timeline')
+        //         }else{
+        //             console.log('error',error, reponse.statusCode)
+        //             req.flash('error', 'Cannot post a reply')
+        //         }
+        //     }
+        // );
     }))   
 
     app.get('/share/twitter/:id', isLoggedIn, then(async(req, res) => {
@@ -430,23 +430,17 @@ module.exports = (app) => {
             req.flash('error', 'Status cannot be empty')
         }
         let token = req.user.facebook.token;
-        let userid = req.user.facebook.id;
         let url = 'https://graph.facebook.com/me/feed?access_token='+token;
-        request.post(
-            url,
-            { form: { 
-                link: 'www.google.com',
-                message: text 
-            } },
-            function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    console.log('success share', body)
-                    res.redirect('/timeline')
-                }else{
-                    console.log('error',error, response.statusCode)
-                    req.flash('error', 'Cannot share the post')
-                }
-            }
-        );
+        try{
+            await request.promise.post(url, {
+                form: { 
+                    link: 'www.cnn.com',
+                    message: text 
+                } 
+            });
+            res.redirect('/timeline')
+        }catch(e){
+            req.flash('error', 'Cannot share the post')
+        }
     }))      
 }
