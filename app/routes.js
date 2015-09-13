@@ -120,12 +120,14 @@ module.exports = (app) => {
                 name: tweet.user.name,
                 username: '@'+tweet.user.screen_name,
                 liked: tweet.favorited,
+                modified: new Date(tweet.created_at),
                 network: networks.twitter
             }
-        })
+        }).slice(0, 10);
+        
         let token = req.user.facebook.token;
         let userid = req.user.facebook.id;
-        let url = 'https://graph.facebook.com/me/feed?fields=id,from,message,picture,likes.summary(true),type&access_token='+token;
+        let url = 'https://graph.facebook.com/me/feed?fields=id,updated_time,from,message,picture,likes.summary(true),type&access_token='+token;
         let [resp] = await request.promise.get(url);
         let body = JSON.parse(resp.body);
         let fbPosts = body.data.filter( fbpost =>{
@@ -138,10 +140,11 @@ module.exports = (app) => {
                 name: fbpost.from.name,
                 username: '',
                 liked: fbpost.likes.summary.has_liked,
+                modified: new Date(fbpost.updated_time),
                 network: networks.facebook
             }
         })
-        posts = posts.concat(fbPosts);  
+        posts = posts.concat(fbPosts.slice(0,10));  
 
         res.render('timeline.ejs', {
             posts: posts,
