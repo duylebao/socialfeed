@@ -334,18 +334,6 @@ module.exports = (app) => {
         }catch(e){
             req.flash('error', 'Cannot post a reply')
         }
-        // request.post(
-        //     url,
-        //     { form: { message: text } },
-        //     function (error, response, body) {
-        //         if (!error && response.statusCode == 200) {
-        //             res.redirect('/timeline')
-        //         }else{
-        //             console.log('error',error, reponse.statusCode)
-        //             req.flash('error', 'Cannot post a reply')
-        //         }
-        //     }
-        // );
     }))   
 
     app.get('/share/twitter/:id', isLoggedIn, then(async(req, res) => {
@@ -387,10 +375,13 @@ module.exports = (app) => {
             access_token_key: twitterConfig.accessToken,
             access_token_secret: twitterConfig.accessSecret
         })
-        await twitterClient.promise.post('/statuses/retweet', {
-        //    status : text,
-            id: id
-        });
+        try{
+            await twitterClient.promise.post('/statuses/retweet/' +id, {
+                status : text
+            });
+        }catch(e){
+            console.log('twitter error', e);
+        }
         res.redirect('/timeline')
     }))  
 
