@@ -109,49 +109,53 @@ module.exports = (app) => {
     })) 
 
     app.get('/timeline', isLoggedIn, then(async(req, res) => {
-        let twitterClient = new Twitter({
-            consumer_key: twitterConfig.consumerKey,
-            consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
-        })
-        let [tweets] = await twitterClient.promise.get('/statuses/home_timeline');
-        let posts = tweets.map(tweet =>{
-            let shareable = tweet.user.id.toString() != req.user.twitter.id
-            return {
-                id : tweet.id_str,
-                image: tweet.user.profile_image_url,
-                text: tweet.text,
-                name: tweet.user.name,
-                username: '@'+tweet.user.screen_name,
-                liked: tweet.favorited,
-                modified: new Date(tweet.created_at),
-                shareable: shareable,
-                network: networks.twitter
-            }
-        }).slice(0, 10);
-        
-        let token = req.user.facebook.token;
-        let userid = req.user.facebook.id;
-        let url = 'https://graph.facebook.com/me/feed?fields=id,updated_time,from,message,picture,likes.summary(true),type&access_token='+token;
-        let [resp] = await request.promise.get(url);
-        let body = JSON.parse(resp.body);
-        let fbPosts = body.data.filter( fbpost =>{
-            return fbpost.type === 'status'
-        }).map( fbpost =>{
-            return {
-                id : fbpost.id,
-                image: (fbpost.picture) ? fbpost.picture : '',
-                text: fbpost.message,
-                name: fbpost.from.name,
-                username: '',
-                liked: fbpost.likes.summary.has_liked,
-                modified: new Date(fbpost.updated_time),
-                shareable: true,
-                network: networks.facebook
-            }
-        })
-        posts = posts.concat(fbPosts.slice(0,10));  
+        let posts = []
+        if (req.user.twitter.id){
+            let twitterClient = new Twitter({
+                consumer_key: twitterConfig.consumerKey,
+                consumer_secret: twitterConfig.consumerSecret,
+                access_token_key: req.user.twitter.token,
+                access_token_secret: req.user.twitter.secret
+            })
+            let [tweets] = await twitterClient.promise.get('/statuses/home_timeline');
+            posts = tweets.map(tweet =>{
+                let shareable = tweet.user.id.toString() != req.user.twitter.id
+                return {
+                    id : tweet.id_str,
+                    image: tweet.user.profile_image_url,
+                    text: tweet.text,
+                    name: tweet.user.name,
+                    username: '@'+tweet.user.screen_name,
+                    liked: tweet.favorited,
+                    modified: new Date(tweet.created_at),
+                    shareable: shareable,
+                    network: networks.twitter
+                }
+            }).slice(0, 10);
+        }
+        if (req.user.facebook.id){
+            let token = req.user.facebook.token;
+            let userid = req.user.facebook.id;
+            let url = 'https://graph.facebook.com/me/feed?fields=id,updated_time,from,message,picture,likes.summary(true),type&access_token='+token;
+            let [resp] = await request.promise.get(url);
+            let body = JSON.parse(resp.body);
+            let fbPosts = body.data.filter( fbpost =>{
+                return fbpost.type === 'status'
+            }).map( fbpost =>{
+                return {
+                    id : fbpost.id,
+                    image: (fbpost.picture) ? fbpost.picture : '',
+                    text: fbpost.message,
+                    name: fbpost.from.name,
+                    username: '',
+                    liked: fbpost.likes.summary.has_liked,
+                    modified: new Date(fbpost.updated_time),
+                    shareable: true,
+                    network: networks.facebook
+                }
+            })
+            posts = posts.concat(fbPosts.slice(0,10)); 
+        } 
 
         res.render('timeline.ejs', {
             posts: posts,
@@ -177,8 +181,8 @@ module.exports = (app) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })
         await twitterClient.promise.post('/statuses/update', {status : text});
 
@@ -204,8 +208,8 @@ module.exports = (app) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })
         let id = req.params.id;
         await twitterClient.promise.post('favorites/create', {id})
@@ -216,8 +220,8 @@ module.exports = (app) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })
         let id = req.params.id;
         await twitterClient.promise.post('favorites/destroy', {id})
@@ -257,8 +261,8 @@ module.exports = (app) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })        
         let [tweet] = await twitterClient.promise.get('/statuses/show/'+id);
         let post = {
@@ -288,8 +292,8 @@ module.exports = (app) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })
         await twitterClient.promise.post('/statuses/update', {
             status : text,
@@ -351,8 +355,8 @@ module.exports = (app) => {
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })        
         let [tweet] = await twitterClient.promise.get('/statuses/show/'+id);
         let post = {
@@ -376,21 +380,21 @@ module.exports = (app) => {
         if (text.length > 140){
             req.flash('error', 'length cannot be greater than 140 characters')
         }
-        if (!text.length){
+        if (text.length === 0){
             req.flash('error', 'Status cannot be empty')
         }
         let twitterClient = new Twitter({
             consumer_key: twitterConfig.consumerKey,
             consumer_secret: twitterConfig.consumerSecret,
-            access_token_key: twitterConfig.accessToken,
-            access_token_secret: twitterConfig.accessSecret
+            access_token_key: req.user.twitter.token,
+            access_token_secret: req.user.twitter.secret
         })
         try{
             await twitterClient.promise.post('/statuses/retweet/' +id, {
                 status : text
             });
         }catch(e){
-            console.log('twitter error', e);
+            console.log('errrr',e)
         }
         res.redirect('/timeline')
     }))  

@@ -21,8 +21,9 @@ let userSchema = mongoose.Schema({
     twitter         : {
         id           : String,
         token        : String,
-        username        : String,
-        name         : String
+        username     : String,
+        name         : String,
+        secret       : String
     }
 })
 
@@ -57,16 +58,18 @@ userSchema.methods.linkFacebookAccount = async function({account, token}) {
     }    
 }
 
-userSchema.methods.linkTwitterAccount = async function({account, token}) {
+userSchema.methods.linkTwitterAccount = async function({account, token, secret}) {
     let user = await this.model('User').findOne({ 'twitter.id' : account.id})
     if (user){
         user.twitter.token = token;
-        user.twitter.name = account.displayName
+        user.twitter.name = account.displayName;
+        user.twitter.secret = secret;
         return await user.save();
     }else{
       this.twitter.id    = account.id;                  
       this.twitter.token = token;                  
       this.twitter.name  = account.displayName
+      this.twitter.secret = secret;
       return await this.save();
     }
 }
