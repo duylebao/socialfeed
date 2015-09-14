@@ -2,16 +2,10 @@ let mongoose = require('mongoose')
 let _ = require('lodash')
 
 let userSchema = mongoose.Schema({
-  local:{
-    email: {
-        type: String,
-        required: false
+    local:{
+        email: String,
+        password: String
     },
-    password: {
-        type: String,
-        required: false
-    }
-  },
     facebook         : {
         id           : String,
         token        : String,
@@ -27,7 +21,8 @@ let userSchema = mongoose.Schema({
 })
 
 userSchema.methods.linkAccount = async function(type, values) {
-  return this['link'+_.capitalize(type)+'Account'](values)
+
+   return await this['link'+_.capitalize(type)+'Account'](values)
 }
 
 userSchema.methods.linkLocalAccount = async function({email, password}) {

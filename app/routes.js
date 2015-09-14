@@ -113,6 +113,7 @@ module.exports = (app) => {
         })
         let [tweets] = await twitterClient.promise.get('/statuses/home_timeline');
         let posts = tweets.map(tweet =>{
+            let shareable = tweet.user.id.toString() != req.user.twitter.id
             return {
                 id : tweet.id_str,
                 image: tweet.user.profile_image_url,
@@ -121,6 +122,7 @@ module.exports = (app) => {
                 username: '@'+tweet.user.screen_name,
                 liked: tweet.favorited,
                 modified: new Date(tweet.created_at),
+                shareable: shareable,
                 network: networks.twitter
             }
         }).slice(0, 10);
@@ -141,6 +143,7 @@ module.exports = (app) => {
                 username: '',
                 liked: fbpost.likes.summary.has_liked,
                 modified: new Date(fbpost.updated_time),
+                shareable: true,
                 network: networks.facebook
             }
         })
