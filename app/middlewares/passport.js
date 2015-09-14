@@ -45,19 +45,27 @@ passport.use(new LocalStrategy({
 
 passport.use('local-signup', new LocalStrategy({
    // Use "email" field instead of "username"
-   usernameField: 'email'
-}, nodeifyit(async (email, password) => {
+   usernameField: 'email',
+   passReqToCallback: true
+}, nodeifyit(async (req, email, password) => {
     email = (email || '').toLowerCase()
+    console.log('reqqqqqqq', req.user)
     // Is the email taken?
     if (await User.promise.findOne({email})) {
         return [false, {message: 'That email is already taken.'}];
     }
-    // create the user
-    let user = new User();
-    user.local.email = email;
+    let user = req.user;
+    if (!user){
+      user = new User();
+    }
     let hash = (await crypto.promise.pbkdf2(password, SALT, 4096, 512, 'sha256')).toString('hex');
-    user.local.password = hash;
-    return await user.save();
+    return await user.linkAccount('local', {email: email, password: hash})    
+    // create the user
+    // let user = new User();
+    // user.local.email = email;
+    // let hash = (await crypto.promise.pbkdf2(password, SALT, 4096, 512, 'sha256')).toString('hex');
+    // user.local.password = hash;
+    // return await user.save();
 }, {spread: true})));
 
 

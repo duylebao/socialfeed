@@ -55,6 +55,10 @@ module.exports = (app) => {
         res.render('login.ejs', {message: req.flash('error')})
     })
 
+    app.get('/connect/local', (req, res) => {
+        res.redirect('/signup')
+    })    
+
     app.get('/signup', (req, res) => {
         res.render('signup.ejs', {message: req.flash('error') })
     })

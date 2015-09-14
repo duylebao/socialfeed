@@ -3,8 +3,14 @@ let _ = require('lodash')
 
 let userSchema = mongoose.Schema({
     local:{
-        email: String,
-        password: String
+      email: {
+          type: String,
+          required: false
+      },
+      password: {
+          type: String,
+          required: false
+      }
     },
     facebook         : {
         id           : String,
